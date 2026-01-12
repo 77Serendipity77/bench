@@ -17,7 +17,10 @@ basic structure:
 5. set the device, model, criterion, optimizer, training schedule.
 6. save the attack result for defense
 
-
+# 运行指令
+# ```
+# CUDA_VISIBLE_DEVICES=0 setsid python ./attack/badnet.py --yaml_path ./config/attack/prototype/cifar10.yaml --patch_mask_path ./resource/badnet/trigger_image.png  --save_folder_name badnet_0_1>./train_badnet_log_0_1 2>&1 &
+# ```
 '''
 
 import os

@@ -45,6 +45,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+CUDA_VISIBLE_DEVICES=1 setsid python ./attack/bpp.py \
+    --yaml_path ./config/attack/prototype/cifar10.yaml \
+    --save_folder_name bpp_0_1 \
+    > ./train_bpp_log_0_1 2>&1 &
+
 '''
 
 import sys, os, logging

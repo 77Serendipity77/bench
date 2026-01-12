@@ -45,7 +45,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
-
+# CUDA_VISIBLE_DEVICES=0 setsid python ./attack/badnet.py --yaml_path ./config/attack/prototype/cifar10.yaml --patch_mask_path ./resource/lf/trigger_image.png  --save_folder_name lf_0_1>./train_lf_log_0_1 2>&1 &
 import argparse
 import logging
 import os

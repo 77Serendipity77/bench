@@ -29,6 +29,17 @@ Original code file license is as the end of this script
 
 Note that for fairness issue, we apply the same total training epochs as all other attack methods. But for Blind, it may not be the best choice.
 
+运行指令
+
+python ./attack/blind.py \
+    --yaml_path ./config/attack/prototype/cifar10.yaml \
+    --save_folder_name blind_0_1
+
+CUDA_VISIBLE_DEVICES=0 setsid python ./attack/blind.py \
+    --yaml_path ./config/attack/prototype/cifar10.yaml \
+    --save_folder_name blind_0_1 \
+    >./train_blind_log_0_1 2>&1 &
+
 '''
 import os
 import sys

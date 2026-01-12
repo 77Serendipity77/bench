@@ -20,7 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
+# CUDA_VISIBLE_DEVICES=0 setsid python ./defense/nc.py --result_file blended_0_2 --yaml_path ./config/defense/nc/cifar10.yaml --dataset cifar10 > ./log_nc 2>&1 &
+# CUDA_VISIBLE_DEVICES=0 setsid python ./defense/abl.py --result_file badnet_0_1 --yaml_path ./config/defense/abl/cifar10.yaml --dataset cifar10 > ./log_abl 2>&1 &
 '''
 Neural Cleanse: Identifying And Mitigating Backdoor Attacks In Neural Networks
 This file is modified based on the following source:

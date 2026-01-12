@@ -16,6 +16,14 @@ basic structure:
 5. set the device, model, criterion, optimizer, training schedule.
 6. save the attack result for defense
 
+CUDA_VISIBLE_DEVICES=0 setsid python ./attack/blended.py \
+    --yaml_path ./config/attack/prototype/cifar10.yaml \
+    --attack_trigger_img_path ./resource/blended/resized_image_32x32.jpg \
+    --attack_train_blended_alpha 0.2 \
+    --attack_test_blended_alpha 0.2 \
+    --save_folder_name blended_0_2 \
+    >./train_blended_log_0_2 2>&1 &
+
 '''
 import argparse
 import os

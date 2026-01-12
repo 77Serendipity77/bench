@@ -25,6 +25,10 @@ basic sturcture for defense method:
         b. isolate the special data(loss is low) as backdoor data
         c. unlearn the backdoor data and learn the remaining data
     4. test the result and get ASR, ACC, RC 
+
+# CUDA_VISIBLE_DEVICES=0 setsid python ./defense/abl.py --result_file badnet_0_1 --yaml_path ./config/defense/abl/cifar10.yaml --dataset cifar10 > ./log_abl 2>&1 &
+# CUDA_VISIBLE_DEVICES=0 setsid python ./defense/abl.py --result_file blended_0_2 --yaml_path ./config/defense/abl/cifar10.yaml --dataset cifar10 > ./log_abl_blended_0_2 2>&1 &
+# CUDA_VISIBLE_DEVICES=0 setsid python ./defense/abl.py --result_file spd_only_fourier --yaml_path ./config/defense/abl/cifar10.yaml --dataset cifar10 > ./log_abl_spd_only_fourier 2>&1 &
 '''
 
 
@@ -53,6 +57,11 @@ from utils.log_assist import get_git_info
 from utils.aggregate_block.dataset_and_transform_generate import get_input_shape, get_num_classes, get_transform
 from utils.save_load_attack import load_attack_result, save_defense_result
 from utils.bd_dataset_v2 import dataset_wrapper_with_transform
+#### 修改点1
+from utils.resnet import resnet18
+from utils.vgg import vgg16
+from utils.mobilenetv2 import mobilenetv2
+#### 修改点1
 
 class LGALoss(nn.Module):
     def __init__(self, gamma, criterion):
@@ -222,7 +231,48 @@ def learning_rate_unlearning(optimizer, epoch, args):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
+#### 修改点2
+def create_model(model_type, num_classes, device, empty=False):
+    if model_type == 'resnet18':
+        model = resnet18(num_classes=num_classes)
+        clean_model_path = 'model_resnet18_dataset=cifar10_clean.pth'
 
+    elif model_type == 'vgg16':
+        model = vgg16(num_classes=num_classes)
+        clean_model_path = 'model_vgg16_dataset=cifar10_clean.pth'
+        
+    elif model_type == 'mobilenetv2':
+        model = mobilenetv2(num_classes=num_classes)
+        clean_model_path = 'model_mobilenetv2_dataset=cifar10_clean.pth'
+    else:
+        raise NotImplementedError(f"Unknown model type: {model_type}")
+
+    if empty:
+        return model.to(device)
+
+    # ===== load clean model =====
+    state = torch.load(clean_model_path, map_location='cpu')
+
+    # 兼容不同保存格式
+    if isinstance(state, dict):
+        if 'model' in state:
+            state = state['model']
+        elif 'state_dict' in state:
+            state = state['state_dict']
+
+    # 处理 DataParallel 保存的 module. 前缀
+    new_state = {}
+    for k, v in state.items():
+        if k.startswith('module.'):
+            new_state[k[len('module.'):]] = v
+        else:
+            new_state[k] = v
+
+    model.load_state_dict(new_state, strict=True)
+    model = model.to(device)
+
+    return model
+#### 修改点2
 
 
 class abl(defense):
@@ -295,9 +345,13 @@ class abl(defense):
 
         self.args = args
 
+        # self.clean_model_path = "SPD/model_resnet18_dataset=cifar10_clean.pth"
+
         if 'result_file' in args.__dict__ :
             if args.result_file is not None:
                 self.set_result(args.result_file)
+        
+        
 
     def add_arguments(parser):
         parser.add_argument('--device', type=str, help='cuda, cpu')
@@ -402,7 +456,7 @@ class abl(defense):
         #     ) if torch.cuda.is_available() else "cpu"
         # )
         self.device = self.args.device
-        
+
     def mitigation(self):
         self.set_devices()
         fix_random(self.args.random_seed)
@@ -443,8 +497,33 @@ class abl(defense):
         '''
         agg = Metric_Aggregator()
         # Load models
+        # logging.info('----------- Network Initialization --------------')
+        # model_ascent = generate_cls_model(args.model,args.num_classes)
+#### 修改点3
         logging.info('----------- Network Initialization --------------')
-        model_ascent = generate_cls_model(args.model,args.num_classes)
+
+        model_ascent = create_model(
+            model_type=args.model,
+            num_classes=args.num_classes,
+            device=args.device,
+            empty=False,   # False = 使用 clean model
+        )
+
+        # DataParallel 逻辑保持不变
+        if "," in self.device:
+            model_ascent = torch.nn.DataParallel(
+                model_ascent,
+                device_ids=[int(i) for i in args.device[5:].split(",")]
+            )
+            self.args.device = f'cuda:{model_ascent.device_ids[0]}'
+            model_ascent.to(self.args.device)
+        else:
+            model_ascent.to(self.args.device)
+
+        logging.info('Clean model initialized for ABL.')
+#### 修改点3
+
+
         if "," in self.device:
             model_ascent = torch.nn.DataParallel(
                 model_ascent,
